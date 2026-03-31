@@ -4,15 +4,38 @@ const path = require("path");
 
 const app = express();
 
-// Servir archivos estáticos
+// 🔐 TUS DATOS OPENDRIVE
+const USER = "TU_USUARIO";
+const PASS = "TU_PASSWORD";
+
+// Servir frontend
 app.use(express.static(path.join(__dirname, "public")));
 
-// Ruta principal (evita error Not Found)
+// Ruta principal
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// STREAM (oculta el link real)
+// 📁 LISTAR ARCHIVOS (WebDAV)
+app.get("/list", (req, res) => {
+    const folder = req.query.path || "/";
+
+    request({
+        method: "PROPFIND",
+        url: "https://webdav.opendrive.com" + folder,
+        auth: {
+            user: USER,
+            pass: PASS
+        },
+        headers: {
+            Depth: 1
+        }
+    }, (err, response, body) => {
+        res.send(body);
+    });
+});
+
+// 🎧 STREAM
 app.get("/stream", (req, res) => {
     const fileUrl = decodeURIComponent(req.query.url);
 
@@ -24,8 +47,4 @@ app.get("/stream", (req, res) => {
     }).pipe(res);
 });
 
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-    console.log("Servidor corriendo en puerto " + PORT);
-});
+app.listen(process.env.PORT || 3000);
