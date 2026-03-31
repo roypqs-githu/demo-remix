@@ -1,26 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Remix Pro DJ Demo</title>
+<title>Remix Pro DJ DEMO</title>
 
 <style>
 body {
+    margin: 0;
     background: #0f172a;
     color: white;
     font-family: Arial;
+}
+
+header {
+    background: #020617;
+    padding: 15px;
     text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.container {
+    padding: 20px;
 }
 
 .folder {
     background: #1e293b;
-    padding: 10px;
-    margin: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
     cursor: pointer;
+    transition: 0.2s;
+}
+
+.folder:hover {
+    background: #334155;
+}
+
+.player {
+    margin-top: 30px;
+    text-align: center;
 }
 
 audio {
-    margin-top: 20px;
+    width: 80%;
+}
+
+footer {
+    margin-top: 40px;
+    text-align: center;
+}
+
+a {
+    color: #38bdf8;
+    text-decoration: none;
+    margin: 0 10px;
 }
 </style>
 
@@ -28,17 +62,29 @@ audio {
 
 <body>
 
-<h1>🎧 Remix Pro DJ DEMO</h1>
+<header>
+🎧 Remix Pro DJ DEMO
+</header>
 
-<div class="folder">📁 Demo Música</div>
+<div class="container">
 
+<div class="folder">
+📁 Música Demo 2025
+</div>
+
+<div class="player">
 <audio controls controlsList="nodownload">
-    <source src="/stream?url=https://rebrand.ly/demoFull3">
+    <source src="/stream?url=PEGA_AQUI_TU_LINK_DIRECTO" type="audio/mpeg">
 </audio>
+</div>
 
-<br><br>
+</div>
 
-<a href="https://facebook.com" target="_blank">Facebook</a>
+<footer>
+<a href="#">Facebook</a>
+<a href="#">Instagram</a>
+<a href="#">WhatsApp</a>
+</footer>
 
 </body>
 </html>
