@@ -1,12 +1,18 @@
 const express = require("express");
 const request = require("request");
+const path = require("path");
 
 const app = express();
 
-// Carpeta pública
-app.use(express.static("public"));
+// Servir archivos estáticos
+app.use(express.static(path.join(__dirname, "public")));
 
-// STREAM (oculta link real)
+// Ruta principal (evita error Not Found)
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// STREAM (oculta el link real)
 app.get("/stream", (req, res) => {
     const fileUrl = decodeURIComponent(req.query.url);
 
@@ -18,6 +24,8 @@ app.get("/stream", (req, res) => {
     }).pipe(res);
 });
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log("Servidor corriendo");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log("Servidor corriendo en puerto " + PORT);
 });
