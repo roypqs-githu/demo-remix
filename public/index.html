@@ -71,18 +71,44 @@ audio {
 
 <script>
 
-// 🔥 SOLO ESTA CARPETA (RAÍZ REAL)
-const ROOT = "/Remix Pro DJ/";
-
 let historyStack = [];
+let ROOT_PATH = null;
 
-async function loadFolder(path = ROOT, addToHistory = true) {
+// 🔥 detectar ruta real de Remix Pro DJ automáticamente
+async function findRoot() {
+
+    const res = await fetch("/list?path=/");
+    const text = await res.text();
+
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, "text/xml");
+
+    const items = xml.getElementsByTagName("d:response");
+
+    for (let i = 0; i < items.length; i++) {
+
+        const href = items[i].getElementsByTagName("d:href")[0].textContent;
+        const cleanHref = decodeURIComponent(href);
+
+        if (cleanHref.toLowerCase().includes("remix pro dj")) {
+            ROOT_PATH = cleanHref;
+            loadFolder(ROOT_PATH);
+            return;
+        }
+    }
+
+    document.getElementById("explorer").innerHTML =
+        "❌ No se encontró la carpeta Remix Pro DJ";
+}
+
+// 📁 cargar carpeta
+async function loadFolder(path, addToHistory = true) {
 
     if (addToHistory) {
         historyStack.push(path);
     }
 
-    const res = await fetch("/list?path=" + path);
+    const res = await fetch("/list?path=" + encodeURIComponent(path));
     const text = await res.text();
 
     const parser = new DOMParser();
@@ -97,14 +123,11 @@ async function loadFolder(path = ROOT, addToHistory = true) {
         const href = items[i].getElementsByTagName("d:href")[0].textContent;
         const cleanHref = decodeURIComponent(href);
 
-        // ❌ evitar que aparezca la carpeta base
         if (cleanHref === path || cleanHref === path + "/") continue;
 
         const name = cleanHref.split("/").filter(Boolean).pop();
 
         if (!name) continue;
-
-        // ❌ ocultar archivos raros
         if (name.startsWith(".")) continue;
 
         if (cleanHref.endsWith("/")) {
@@ -135,11 +158,11 @@ function goBack() {
 // 🏠 inicio
 function goHome() {
     historyStack = [];
-    loadFolder(ROOT);
+    if (ROOT_PATH) loadFolder(ROOT_PATH);
 }
 
-// iniciar
-loadFolder(ROOT);
+// iniciar sistema
+findRoot();
 
 </script>
 
