@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Remix Pro DJ Demo</title>
+
+<style>
+body {
+    background: #0f172a;
+    color: white;
+    font-family: Arial;
+    text-align: center;
+}
+
+.folder {
+    background: #1e293b;
+    padding: 10px;
+    margin: 10px;
+    cursor: pointer;
+}
+
+audio {
+    margin-top: 20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>🎧 Remix Pro DJ DEMO</h1>
+
+<div class="folder">📁 Demo Música</div>
+
+<audio controls controlsList="nodownload">
+    <source src="/stream?url=https://rebrand.ly/demoFull3">
+</audio>
+
+<br><br>
+
+<a href="https://facebook.com" target="_blank">Facebook</a>
+
+</body>
+</html>

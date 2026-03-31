@@ -1,0 +1,23 @@
+const express = require("express");
+const request = require("request");
+
+const app = express();
+
+// Carpeta pública
+app.use(express.static("public"));
+
+// STREAM (oculta link real)
+app.get("/stream", (req, res) => {
+    const fileUrl = decodeURIComponent(req.query.url);
+
+    request({
+        url: fileUrl,
+        headers: {
+            "User-Agent": "Mozilla/5.0"
+        }
+    }).pipe(res);
+});
+
+app.listen(process.env.PORT || 3000, () => {
+    console.log("Servidor corriendo");
+});
