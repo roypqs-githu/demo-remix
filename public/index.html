@@ -15,6 +15,26 @@ header {
     padding: 15px;
     text-align: center;
     font-size: 22px;
+    font-weight: bold;
+}
+
+.nav {
+    padding: 10px;
+    background: #020617;
+}
+
+button {
+    padding: 8px 12px;
+    margin-right: 5px;
+    background: #1e293b;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+button:hover {
+    background: #334155;
 }
 
 .item {
@@ -33,12 +53,28 @@ header {
 
 <header>🎧 Remix Pro DJ DEMO</header>
 
+<div class="nav">
+    <button onclick="goBack()">⬅ Regresar</button>
+    <button onclick="goHome()">🏠 Inicio</button>
+</div>
+
 <div id="explorer"></div>
 
 <audio id="player" controls style="width:100%; margin-top:20px;"></audio>
 
 <script>
-async function loadFolder(path = "/") {
+
+// 🔥 CARPETA BASE (AQUÍ ESTÁ LA CLAVE)
+const ROOT = "/Remix Pro DJ/";
+
+// historial para navegación
+let historyStack = [];
+
+async function loadFolder(path = ROOT, addToHistory = true) {
+
+    if (addToHistory) {
+        historyStack.push(path);
+    }
 
     const res = await fetch("/list?path=" + path);
     const text = await res.text();
@@ -70,11 +106,30 @@ async function loadFolder(path = "/") {
     document.getElementById("explorer").innerHTML = html;
 }
 
+// ▶ reproducir
 function playFile(url) {
-    document.getElementById("player").src = "/stream?url=https://webdav.opendrive.com" + url;
+    document.getElementById("player").src =
+        "/stream?url=https://webdav.opendrive.com" + url;
 }
 
-loadFolder();
+// 🔙 regresar
+function goBack() {
+    if (historyStack.length > 1) {
+        historyStack.pop(); // quitar actual
+        const prev = historyStack.pop(); // anterior
+        loadFolder(prev);
+    }
+}
+
+// 🏠 inicio
+function goHome() {
+    historyStack = [];
+    loadFolder(ROOT);
+}
+
+// iniciar en Remix Pro DJ
+loadFolder(ROOT);
+
 </script>
 
 </body>
