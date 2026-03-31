@@ -1,90 +1,81 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Remix Pro DJ DEMO</title>
 
 <style>
 body {
-    margin: 0;
     background: #0f172a;
     color: white;
     font-family: Arial;
 }
 
 header {
-    background: #020617;
     padding: 15px;
     text-align: center;
-    font-size: 24px;
-    font-weight: bold;
+    font-size: 22px;
 }
 
-.container {
-    padding: 20px;
-}
-
-.folder {
-    background: #1e293b;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 8px;
+.item {
+    padding: 10px;
+    border-bottom: 1px solid #1e293b;
     cursor: pointer;
-    transition: 0.2s;
 }
 
-.folder:hover {
-    background: #334155;
-}
-
-.player {
-    margin-top: 30px;
-    text-align: center;
-}
-
-audio {
-    width: 80%;
-}
-
-footer {
-    margin-top: 40px;
-    text-align: center;
-}
-
-a {
-    color: #38bdf8;
-    text-decoration: none;
-    margin: 0 10px;
+.item:hover {
+    background: #1e293b;
 }
 </style>
-
 </head>
 
 <body>
 
-<header>
-🎧 Remix Pro DJ DEMO
-</header>
+<header>🎧 Remix Pro DJ DEMO</header>
 
-<div class="container">
+<div id="explorer"></div>
 
-<div class="folder">
-📁 Música Demo 2025
-</div>
+<audio id="player" controls style="width:100%; margin-top:20px;"></audio>
 
-<div class="player">
-<audio controls controlsList="nodownload">
-    <source src="/stream?url=https://od.lk/fl/f3bb78e3511e5b5410e129bb9930d37ee60a09a81146e9d766bc53f3ddebdc4c" type="audio/mpeg">
-</audio>
-</div>
+<script>
+async function loadFolder(path = "/") {
 
-</div>
+    const res = await fetch("/list?path=" + path);
+    const text = await res.text();
 
-<footer>
-<a href="#">Facebook</a>
-<a href="#">Instagram</a>
-<a href="#">WhatsApp</a>
-</footer>
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, "text/xml");
+
+    const items = xml.getElementsByTagName("d:response");
+
+    let html = "";
+
+    for (let i = 0; i < items.length; i++) {
+
+        const href = items[i].getElementsByTagName("d:href")[0].textContent;
+
+        if (href === path) continue;
+
+        const name = decodeURIComponent(href.split("/").filter(Boolean).pop());
+
+        if (!name) continue;
+
+        if (href.endsWith("/")) {
+            html += `<div class="item" onclick="loadFolder('${href}')">📁 ${name}</div>`;
+        } else {
+            html += `<div class="item" onclick="playFile('${href}')">🎵 ${name}</div>`;
+        }
+    }
+
+    document.getElementById("explorer").innerHTML = html;
+}
+
+function playFile(url) {
+    document.getElementById("player").src = "/stream?url=https://webdav.opendrive.com" + url;
+}
+
+loadFolder();
+</script>
 
 </body>
 </html>
