@@ -9,6 +9,7 @@ body {
     background: #0f172a;
     color: white;
     font-family: Arial;
+    margin: 0;
 }
 
 header {
@@ -16,6 +17,7 @@ header {
     text-align: center;
     font-size: 22px;
     font-weight: bold;
+    background: #020617;
 }
 
 .nav {
@@ -46,6 +48,11 @@ button:hover {
 .item:hover {
     background: #1e293b;
 }
+
+audio {
+    width: 100%;
+    margin-top: 10px;
+}
 </style>
 </head>
 
@@ -60,14 +67,13 @@ button:hover {
 
 <div id="explorer"></div>
 
-<audio id="player" controls style="width:100%; margin-top:20px;"></audio>
+<audio id="player" controls controlsList="nodownload"></audio>
 
 <script>
 
-// 🔥 CARPETA BASE (AQUÍ ESTÁ LA CLAVE)
+// 🔥 SOLO ESTA CARPETA (RAÍZ REAL)
 const ROOT = "/Remix Pro DJ/";
 
-// historial para navegación
 let historyStack = [];
 
 async function loadFolder(path = ROOT, addToHistory = true) {
@@ -89,17 +95,22 @@ async function loadFolder(path = ROOT, addToHistory = true) {
     for (let i = 0; i < items.length; i++) {
 
         const href = items[i].getElementsByTagName("d:href")[0].textContent;
+        const cleanHref = decodeURIComponent(href);
 
-        if (href === path) continue;
+        // ❌ evitar que aparezca la carpeta base
+        if (cleanHref === path || cleanHref === path + "/") continue;
 
-        const name = decodeURIComponent(href.split("/").filter(Boolean).pop());
+        const name = cleanHref.split("/").filter(Boolean).pop();
 
         if (!name) continue;
 
-        if (href.endsWith("/")) {
-            html += `<div class="item" onclick="loadFolder('${href}')">📁 ${name}</div>`;
+        // ❌ ocultar archivos raros
+        if (name.startsWith(".")) continue;
+
+        if (cleanHref.endsWith("/")) {
+            html += `<div class="item" onclick="loadFolder('${cleanHref}')">📁 ${name}</div>`;
         } else {
-            html += `<div class="item" onclick="playFile('${href}')">🎵 ${name}</div>`;
+            html += `<div class="item" onclick="playFile('${cleanHref}')">🎵 ${name}</div>`;
         }
     }
 
@@ -115,8 +126,8 @@ function playFile(url) {
 // 🔙 regresar
 function goBack() {
     if (historyStack.length > 1) {
-        historyStack.pop(); // quitar actual
-        const prev = historyStack.pop(); // anterior
+        historyStack.pop();
+        const prev = historyStack.pop();
         loadFolder(prev);
     }
 }
@@ -127,7 +138,7 @@ function goHome() {
     loadFolder(ROOT);
 }
 
-// iniciar en Remix Pro DJ
+// iniciar
 loadFolder(ROOT);
 
 </script>
