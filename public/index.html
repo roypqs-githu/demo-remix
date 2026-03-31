@@ -71,38 +71,15 @@ audio {
 
 <script>
 
+// 🔥 PON AQUÍ TU RUTA REAL (AJÚSTALA)
+const ROOT = "/Remix%20Pro%20DJ/";
+// EJEMPLOS SI NO FUNCIONA:
+// const ROOT = "/files/Remix Pro DJ/";
+// const ROOT = "/dav/Remix Pro DJ/";
+
 let historyStack = [];
-let ROOT_PATH = null;
 
-// 🔥 detectar ruta real de Remix Pro DJ automáticamente
-async function findRoot() {
-
-    const res = await fetch("/list?path=/");
-    const text = await res.text();
-
-    const parser = new DOMParser();
-    const xml = parser.parseFromString(text, "text/xml");
-
-    const items = xml.getElementsByTagName("d:response");
-
-    for (let i = 0; i < items.length; i++) {
-
-        const href = items[i].getElementsByTagName("d:href")[0].textContent;
-        const cleanHref = decodeURIComponent(href);
-
-        if (cleanHref.toLowerCase().includes("remix pro dj")) {
-            ROOT_PATH = cleanHref;
-            loadFolder(ROOT_PATH);
-            return;
-        }
-    }
-
-    document.getElementById("explorer").innerHTML =
-        "❌ No se encontró la carpeta Remix Pro DJ";
-}
-
-// 📁 cargar carpeta
-async function loadFolder(path, addToHistory = true) {
+async function loadFolder(path = ROOT, addToHistory = true) {
 
     if (addToHistory) {
         historyStack.push(path);
@@ -158,11 +135,11 @@ function goBack() {
 // 🏠 inicio
 function goHome() {
     historyStack = [];
-    if (ROOT_PATH) loadFolder(ROOT_PATH);
+    loadFolder(ROOT);
 }
 
-// iniciar sistema
-findRoot();
+// iniciar directo
+loadFolder(ROOT);
 
 </script>
 
