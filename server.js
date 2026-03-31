@@ -5,8 +5,8 @@ const path = require("path");
 const app = express();
 
 // 🔐 TUS DATOS OPENDRIVE
-const USER = "roy.pqs@icloud.com";
-const PASS = "Sonido2k24";
+const USER = "TU_USUARIO";
+const PASS = "TU_PASSWORD";
 
 // Servir frontend
 app.use(express.static(path.join(__dirname, "public")));
@@ -35,16 +35,24 @@ app.get("/list", (req, res) => {
     });
 });
 
-// 🎧 STREAM
+// 🎧 STREAM (CORREGIDO 🔥)
 app.get("/stream", (req, res) => {
     const fileUrl = decodeURIComponent(req.query.url);
 
     request({
         url: fileUrl,
+        auth: {
+            user: USER,
+            pass: PASS
+        },
         headers: {
             "User-Agent": "Mozilla/5.0"
         }
     }).pipe(res);
 });
 
-app.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log("Servidor corriendo en puerto " + PORT);
+});
