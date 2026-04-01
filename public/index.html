@@ -14,7 +14,6 @@ body {
     margin: 0;
 }
 
-/* HEADER */
 header {
     padding: 15px;
     text-align: center;
@@ -23,7 +22,6 @@ header {
     border-bottom: 1px solid #1e293b;
 }
 
-/* NAV */
 .nav {
     padding: 10px;
     border-bottom: 1px solid #1e293b;
@@ -43,7 +41,6 @@ button:hover {
     background: #334155;
 }
 
-/* GRID */
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -51,7 +48,6 @@ button:hover {
     padding: 15px;
 }
 
-/* CARDS */
 .card {
     background: #0f172a;
     padding: 15px;
@@ -69,7 +65,6 @@ button:hover {
     margin-bottom: 10px;
 }
 
-/* PLAYER */
 .player-bar {
     position: fixed;
     bottom: 0;
@@ -84,7 +79,6 @@ audio, video {
     width: 100%;
 }
 
-/* evitar que se tape contenido */
 body::after {
     content: "";
     display: block;
@@ -109,16 +103,14 @@ body::after {
 
 <div class="player-bar">
 
-    <!-- AUDIO -->
-    <audio id="audioPlayer" controls controlsList="nodownload"></audio>
+<audio id="audioPlayer" controls controlsList="nodownload"></audio>
 
-    <!-- VIDEO -->
-    <video id="videoPlayer"
-        controls
-        controlsList="nodownload nofullscreen"
-        playsinline webkit-playsinline
-        style="display:none; max-height:250px; background:black;">
-    </video>
+<video id="videoPlayer"
+controls
+controlsList="nodownload nofullscreen"
+playsinline webkit-playsinline
+style="display:none; max-height:250px; background:black;">
+</video>
 
 </div>
 
@@ -127,7 +119,6 @@ body::after {
 let ROOT = null;
 let historyStack = [];
 
-// detectar carpeta base (tu versión original)
 async function detectRoot() {
 
     const res = await fetch("/list?path=/");
@@ -154,12 +145,9 @@ async function detectRoot() {
         "❌ No se encontró la carpeta Remix Pro DJ";
 }
 
-// cargar carpeta (SIN CAMBIOS)
 async function loadFolder(path, addToHistory = true) {
 
-    if (addToHistory) {
-        historyStack.push(path);
-    }
+    if (addToHistory) historyStack.push(path);
 
     document.getElementById("path").innerText =
         decodeURIComponent(path);
@@ -205,7 +193,6 @@ async function loadFolder(path, addToHistory = true) {
         html || "⚠️ Carpeta vacía";
 }
 
-// 🔥 REPRODUCCIÓN MEJORADA
 function playFile(url) {
 
     const fullUrl = "/stream?url=https://webdav.opendrive.com" + encodeURIComponent(url);
@@ -225,24 +212,20 @@ function playFile(url) {
 
         video.src = fullUrl;
         video.style.display = "block";
-        video.load();
         video.play();
 
     } else if (lower.endsWith(".mp3")) {
 
         audio.src = fullUrl;
         audio.style.display = "block";
-        audio.load();
         audio.play();
 
     } else if (lower.endsWith(".flac")) {
 
-        alert("⚠️ FLAC no compatible en navegador (iPhone).");
-
+        alert("⚠️ FLAC no compatible en navegador.");
     }
 }
 
-// navegación (igual)
 function goBack() {
     if (historyStack.length > 1) {
         historyStack.pop();
@@ -256,7 +239,6 @@ function goHome() {
     if (ROOT) loadFolder(ROOT);
 }
 
-// iniciar
 detectRoot();
 
 </script>
