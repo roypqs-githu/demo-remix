@@ -4,9 +4,11 @@ const path = require("path");
 
 const app = express();
 
-const USER = "TU_USUARIO";
-const PASS = "TU_PASSWORD";
+// 🔐 TUS DATOS
+const USER = "roy.pqs@icloud.com";
+const PASS = "Sonido2k24";
 
+// frontend
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
@@ -31,22 +33,23 @@ app.get("/list", (req, res) => {
     });
 });
 
-// 🎬🎵 STREAM CON RANGE (🔥 SOLUCIÓN REAL)
+// 🎬🎵 STREAM REAL (COMPATIBLE iPhone / Android)
 app.get("/stream", (req, res) => {
 
     const fileUrl = decodeURIComponent(req.query.url);
-
     const range = req.headers.range;
 
     const headers = {
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "*/*",
+        "Connection": "keep-alive"
     };
 
     if (range) {
-        headers["Range"] = range; // 🔥 CLAVE
+        headers["Range"] = range;
     }
 
-    const stream = request({
+    request({
         url: fileUrl,
         auth: {
             user: USER,
@@ -54,21 +57,19 @@ app.get("/stream", (req, res) => {
             sendImmediately: true
         },
         headers: headers
-    });
+    })
+    .on("response", (response) => {
 
-    stream.on("response", (response) => {
-
-        // 🔥 copiar headers reales
         res.writeHead(response.statusCode, {
             "Content-Type": response.headers["content-type"] || "application/octet-stream",
-            "Content-Length": response.headers["content-length"],
             "Accept-Ranges": "bytes",
-            "Content-Range": response.headers["content-range"] || undefined
+            "Content-Length": response.headers["content-length"],
+            "Content-Range": response.headers["content-range"],
+            "Cache-Control": "no-store"
         });
 
-    });
-
-    stream.pipe(res);
+    })
+    .pipe(res);
 });
 
 app.listen(process.env.PORT || 3000, () => {
