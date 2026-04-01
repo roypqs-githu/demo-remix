@@ -34,6 +34,7 @@ button {
     border-radius: 6px;
 }
 
+/* RUTA */
 #path {
     padding: 8px;
     font-size: 12px;
@@ -42,6 +43,7 @@ button {
     white-space: nowrap;
 }
 
+/* GRID */
 .grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -60,6 +62,7 @@ button {
     font-size: 40px;
 }
 
+/* PLAYER */
 .player-bar {
     position: fixed;
     bottom: 0;
@@ -70,6 +73,13 @@ button {
 
 audio, video {
     width: 100%;
+}
+
+/* espacio para no tapar */
+body::after {
+    content: "";
+    display: block;
+    height: 100px;
 }
 </style>
 </head>
@@ -85,7 +95,7 @@ audio, video {
 
 <div id="path"></div>
 
-<div id="explorer" class="grid"></div>
+<div id="explorer" class="grid">Cargando...</div>
 
 <div class="player-bar">
 
@@ -102,36 +112,17 @@ style="display:none;">
 
 <script>
 
-let ROOT = null;
+// 🔥 RUTA FIJA (ESTABLE)
+const ROOT = "/Remix Pro DJ/";
+
 let historyStack = [];
 
-async function detectRoot() {
-
-    const res = await fetch("/list?path=/");
-    const text = await res.text();
-
-    const parser = new DOMParser();
-    const xml = parser.parseFromString(text, "text/xml");
-
-    const items = xml.getElementsByTagName("d:response");
-
-    for (let i = 0; i < items.length; i++) {
-
-        const href = items[i].getElementsByTagName("d:href")[0].textContent;
-
-        if (decodeURIComponent(href).toLowerCase().includes("remix pro dj")) {
-            ROOT = href;
-            loadFolder(ROOT);
-            return;
-        }
-    }
-}
-
+// 📁 cargar carpeta
 async function loadFolder(path, addToHistory = true) {
 
     if (addToHistory) historyStack.push(path);
 
-    document.getElementById("path").innerText = decodeURIComponent(path);
+    document.getElementById("path").innerText = path;
 
     const res = await fetch("/list?path=" + encodeURIComponent(path));
     const text = await res.text();
@@ -149,25 +140,34 @@ async function loadFolder(path, addToHistory = true) {
 
         if (href === path) continue;
 
-        const name = decodeURIComponent(href.split("/").pop());
+        const decoded = decodeURIComponent(href);
+        const name = decoded.split("/").filter(Boolean).pop();
 
-        if (!name) continue;
+        if (!name || name.startsWith(".")) continue;
 
         if (href.endsWith("/")) {
 
-            html += `<div class="card" onclick="loadFolder('${href}')">
-            <div class="icon">📁</div>${name}</div>`;
+            html += `
+            <div class="card" onclick="loadFolder('${href}')">
+                <div class="icon">📁</div>
+                <div>${name}</div>
+            </div>`;
 
         } else {
 
-            html += `<div class="card" onclick="playFile('${href}')">
-            <div class="icon">🎵</div>${name}</div>`;
+            html += `
+            <div class="card" onclick="playFile('${href}')">
+                <div class="icon">🎵</div>
+                <div>${name}</div>
+            </div>`;
         }
     }
 
-    document.getElementById("explorer").innerHTML = html;
+    document.getElementById("explorer").innerHTML =
+        html || "⚠️ Carpeta vacía";
 }
 
+// ▶ reproducir
 function playFile(url) {
 
     const fullUrl = "/stream?url=https://webdav.opendrive.com" + encodeURIComponent(url);
@@ -197,24 +197,28 @@ function playFile(url) {
 
     } else if (lower.endsWith(".flac")) {
 
-        alert("⚠️ FLAC no es compatible en iPhone. Usa MP3.");
+        alert("⚠️ FLAC no compatible en navegador. Usa MP3.");
 
     }
 }
 
+// 🔙 regresar
 function goBack() {
     if (historyStack.length > 1) {
         historyStack.pop();
-        loadFolder(historyStack.pop());
+        const prev = historyStack.pop();
+        loadFolder(prev);
     }
 }
 
+// 🏠 inicio
 function goHome() {
     historyStack = [];
     loadFolder(ROOT);
 }
 
-detectRoot();
+// iniciar
+loadFolder(ROOT);
 
 </script>
 
