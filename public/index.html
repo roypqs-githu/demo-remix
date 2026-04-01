@@ -14,7 +14,6 @@ body {
     margin: 0;
 }
 
-/* HEADER */
 header {
     padding: 12px;
     text-align: center;
@@ -23,31 +22,26 @@ header {
     border-bottom: 1px solid #1e293b;
 }
 
-/* NAV */
 .nav {
     padding: 10px;
 }
 
 button {
-    padding: 10px 14px;
-    margin-right: 5px;
+    padding: 10px;
     background: #1e293b;
     color: white;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
 }
 
-/* PATH */
 #path {
-    padding: 8px 12px;
+    padding: 8px;
     font-size: 12px;
     color: #94a3b8;
     overflow-x: auto;
     white-space: nowrap;
 }
 
-/* GRID */
 .grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -55,72 +49,29 @@ button {
     padding: 10px;
 }
 
-@media (min-width: 600px) {
-    .grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (min-width: 900px) {
-    .grid {
-        grid-template-columns: repeat(5, 1fr);
-    }
-}
-
-/* CARD */
 .card {
     background: #0f172a;
-    padding: 15px 10px;
+    padding: 15px;
     border-radius: 10px;
     text-align: center;
-    cursor: pointer;
-}
-
-.card:hover {
-    background: #1e293b;
 }
 
 .icon {
     font-size: 40px;
-    margin-bottom: 10px;
 }
 
-.card div:last-child {
-    font-size: 13px;
-    word-break: break-word;
-}
-
-/* PLAYER */
 .player-bar {
     position: fixed;
     bottom: 0;
-    left: 0;
-    right: 0;
+    width: 100%;
     background: #020617;
-    border-top: 1px solid #1e293b;
     padding: 8px;
 }
 
-/* AUDIO */
-audio {
+audio, video {
     width: 100%;
-}
-
-/* VIDEO */
-video {
-    width: 100%;
-    max-height: 250px;
-    background: black;
-}
-
-/* espacio para player */
-body::after {
-    content: "";
-    display: block;
-    height: 90px;
 }
 </style>
-
 </head>
 
 <body>
@@ -134,14 +85,18 @@ body::after {
 
 <div id="path"></div>
 
-<div id="explorer" class="grid">Cargando...</div>
+<div id="explorer" class="grid"></div>
 
-<!-- PLAYER 🔥 -->
 <div class="player-bar">
 
-    <audio id="audioPlayer" controls controlsList="nodownload" style="display:none;"></audio>
+<audio id="audioPlayer" controls controlsList="nodownload"></audio>
 
-    <video id="videoPlayer" controls playsinline webkit-playsinline style="display:none;"></video>
+<video id="videoPlayer"
+controls
+controlsList="nodownload nofullscreen"
+playsinline webkit-playsinline
+style="display:none;">
+</video>
 
 </div>
 
@@ -150,7 +105,6 @@ body::after {
 let ROOT = null;
 let historyStack = [];
 
-// detectar carpeta base
 async function detectRoot() {
 
     const res = await fetch("/list?path=/");
@@ -164,9 +118,8 @@ async function detectRoot() {
     for (let i = 0; i < items.length; i++) {
 
         const href = items[i].getElementsByTagName("d:href")[0].textContent;
-        const decoded = decodeURIComponent(href).toLowerCase();
 
-        if (decoded.includes("remix pro dj")) {
+        if (decodeURIComponent(href).toLowerCase().includes("remix pro dj")) {
             ROOT = href;
             loadFolder(ROOT);
             return;
@@ -174,13 +127,11 @@ async function detectRoot() {
     }
 }
 
-// cargar carpeta
 async function loadFolder(path, addToHistory = true) {
 
     if (addToHistory) historyStack.push(path);
 
-    document.getElementById("path").innerText =
-        decodeURIComponent(path);
+    document.getElementById("path").innerText = decodeURIComponent(path);
 
     const res = await fetch("/list?path=" + encodeURIComponent(path));
     const text = await res.text();
@@ -198,32 +149,25 @@ async function loadFolder(path, addToHistory = true) {
 
         if (href === path) continue;
 
-        const decoded = decodeURIComponent(href);
-        const parts = decoded.split("/").filter(Boolean);
-        const name = parts[parts.length - 1];
+        const name = decodeURIComponent(href.split("/").pop());
 
-        if (!name || name.startsWith(".")) continue;
+        if (!name) continue;
 
         if (href.endsWith("/")) {
-            html += `
-            <div class="card" onclick="loadFolder('${href}')">
-                <div class="icon">📁</div>
-                <div>${name}</div>
-            </div>`;
+
+            html += `<div class="card" onclick="loadFolder('${href}')">
+            <div class="icon">📁</div>${name}</div>`;
+
         } else {
-            html += `
-            <div class="card" onclick="playFile('${href}')">
-                <div class="icon">🎵</div>
-                <div>${name}</div>
-            </div>`;
+
+            html += `<div class="card" onclick="playFile('${href}')">
+            <div class="icon">🎵</div>${name}</div>`;
         }
     }
 
-    document.getElementById("explorer").innerHTML =
-        html || "Carpeta vacía";
+    document.getElementById("explorer").innerHTML = html;
 }
 
-// 🔥 REPRODUCCIÓN INTELIGENTE
 function playFile(url) {
 
     const fullUrl = "/stream?url=https://webdav.opendrive.com" + encodeURIComponent(url);
@@ -239,37 +183,37 @@ function playFile(url) {
 
     const lower = url.toLowerCase();
 
-    if (
-        lower.endsWith(".mp4") ||
-        lower.endsWith(".mkv") ||
-        lower.endsWith(".webm")
-    ) {
+    if (lower.endsWith(".mp4")) {
+
         video.src = fullUrl;
         video.style.display = "block";
         video.play();
-    } else {
+
+    } else if (lower.endsWith(".mp3")) {
+
         audio.src = fullUrl;
         audio.style.display = "block";
         audio.play();
+
+    } else if (lower.endsWith(".flac")) {
+
+        alert("⚠️ FLAC no es compatible en iPhone. Usa MP3.");
+
     }
 }
 
-// regresar
 function goBack() {
     if (historyStack.length > 1) {
         historyStack.pop();
-        const prev = historyStack.pop();
-        loadFolder(prev);
+        loadFolder(historyStack.pop());
     }
 }
 
-// inicio
 function goHome() {
     historyStack = [];
-    if (ROOT) loadFolder(ROOT);
+    loadFolder(ROOT);
 }
 
-// iniciar
 detectRoot();
 
 </script>
