@@ -65,57 +65,69 @@ audio {
     <button onclick="goHome()">🏠 Inicio</button>
 </div>
 
-<div id="explorer"></div>
+<div id="explorer">Cargando...</div>
 
 <audio id="player" controls controlsList="nodownload"></audio>
 
 <script>
 
-// 🔥 RUTA CORRECTA (YA CONFIRMADA)
+// 🔥 RUTA BASE (CORRECTA)
 const ROOT = "/Remix%20Pro%20DJ/";
 
 let historyStack = [];
 
+// 📁 cargar carpeta
 async function loadFolder(path = ROOT, addToHistory = true) {
 
     if (addToHistory) {
         historyStack.push(path);
     }
 
-    const res = await fetch("/list?path=" + encodeURIComponent(path));
-    const text = await res.text();
+    try {
 
-    const parser = new DOMParser();
-    const xml = parser.parseFromString(text, "text/xml");
+        const res = await fetch("/list?path=" + encodeURIComponent(path));
+        const text = await res.text();
 
-    const items = xml.getElementsByTagName("d:response");
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, "text/xml");
 
-    let html = "";
+        const items = xml.getElementsByTagName("d:response");
 
-    for (let i = 0; i < items.length; i++) {
+        let html = "";
 
-        const href = items[i].getElementsByTagName("d:href")[0].textContent;
+        for (let i = 0; i < items.length; i++) {
 
-        // ⚠️ IMPORTANTE: NO decodificar aquí
-        const cleanHref = href;
+            const href = items[i].getElementsByTagName("d:href")[0].textContent;
 
-        if (cleanHref === path || cleanHref === path + "/") continue;
+            // 🔥 normalizar ruta
+            const cleanHref = href.replace("/public.php/webdav", "");
 
-        const name = decodeURIComponent(
-            cleanHref.split("/").filter(Boolean).pop()
-        );
+            // 🔥 ignorar root (sin comparación exacta)
+            if (cleanHref === "/" || cleanHref === path) continue;
 
-        if (!name) continue;
-        if (name.startsWith(".")) continue;
+            const parts = cleanHref.split("/").filter(Boolean);
+            const name = decodeURIComponent(parts[parts.length - 1] || "");
 
-        if (cleanHref.endsWith("/")) {
-            html += `<div class="item" onclick="loadFolder('${cleanHref}')">📁 ${name}</div>`;
-        } else {
-            html += `<div class="item" onclick="playFile('${cleanHref}')">🎵 ${name}</div>`;
+            if (!name) continue;
+            if (name.startsWith(".")) continue;
+
+            // 🔥 solo mostrar si pertenece a ROOT
+            if (!cleanHref.includes("Remix%20Pro%20DJ")) continue;
+
+            if (cleanHref.endsWith("/")) {
+                html += `<div class="item" onclick="loadFolder('${cleanHref}')">📁 ${name}</div>`;
+            } else {
+                html += `<div class="item" onclick="playFile('${cleanHref}')">🎵 ${name}</div>`;
+            }
         }
-    }
 
-    document.getElementById("explorer").innerHTML = html;
+        document.getElementById("explorer").innerHTML =
+            html || "⚠️ Carpeta vacía o ruta incorrecta";
+
+    } catch (e) {
+        document.getElementById("explorer").innerHTML =
+            "❌ Error cargando carpeta";
+    }
 }
 
 // ▶ reproducir
