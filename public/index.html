@@ -71,12 +71,11 @@ audio {
 
 <script>
 
-// 🔥 RUTA BASE (CORRECTA)
-const ROOT = "/Remix%20Pro%20DJ/";
+// 🔥 RUTA REAL (SIN %20)
+const ROOT = "/Remix Pro DJ/";
 
 let historyStack = [];
 
-// 📁 cargar carpeta
 async function loadFolder(path = ROOT, addToHistory = true) {
 
     if (addToHistory) {
@@ -85,6 +84,7 @@ async function loadFolder(path = ROOT, addToHistory = true) {
 
     try {
 
+        // 🔥 aquí sí se codifica
         const res = await fetch("/list?path=" + encodeURIComponent(path));
         const text = await res.text();
 
@@ -99,25 +99,24 @@ async function loadFolder(path = ROOT, addToHistory = true) {
 
             const href = items[i].getElementsByTagName("d:href")[0].textContent;
 
-            // 🔥 normalizar ruta
-            const cleanHref = href.replace("/public.php/webdav", "");
+            const decoded = decodeURIComponent(href);
 
-            // 🔥 ignorar root (sin comparación exacta)
-            if (cleanHref === "/" || cleanHref === path) continue;
+            // ❌ ignorar root
+            if (decoded === path || decoded === path + "/") continue;
 
-            const parts = cleanHref.split("/").filter(Boolean);
-            const name = decodeURIComponent(parts[parts.length - 1] || "");
+            const parts = decoded.split("/").filter(Boolean);
+            const name = parts[parts.length - 1];
 
             if (!name) continue;
             if (name.startsWith(".")) continue;
 
-            // 🔥 solo mostrar si pertenece a ROOT
-            if (!cleanHref.includes("Remix%20Pro%20DJ")) continue;
+            // 🔥 SOLO lo que esté dentro de Remix Pro DJ
+            if (!decoded.includes("Remix Pro DJ")) continue;
 
-            if (cleanHref.endsWith("/")) {
-                html += `<div class="item" onclick="loadFolder('${cleanHref}')">📁 ${name}</div>`;
+            if (decoded.endsWith("/")) {
+                html += `<div class="item" onclick="loadFolder('${decoded}')">📁 ${name}</div>`;
             } else {
-                html += `<div class="item" onclick="playFile('${cleanHref}')">🎵 ${name}</div>`;
+                html += `<div class="item" onclick="playFile('${decoded}')">🎵 ${name}</div>`;
             }
         }
 
@@ -133,7 +132,7 @@ async function loadFolder(path = ROOT, addToHistory = true) {
 // ▶ reproducir
 function playFile(url) {
     document.getElementById("player").src =
-        "/stream?url=https://webdav.opendrive.com" + url;
+        "/stream?url=https://webdav.opendrive.com" + encodeURIComponent(url);
 }
 
 // 🔙 regresar
