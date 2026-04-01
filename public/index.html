@@ -6,23 +6,27 @@
 
 <style>
 body {
-    background: #0f172a;
+    background: #020617;
     color: white;
     font-family: Arial;
     margin: 0;
 }
 
+/* HEADER */
 header {
     padding: 15px;
     text-align: center;
     font-size: 22px;
     font-weight: bold;
     background: #020617;
+    border-bottom: 1px solid #1e293b;
 }
 
+/* NAV */
 .nav {
     padding: 10px;
     background: #020617;
+    border-bottom: 1px solid #1e293b;
 }
 
 button {
@@ -39,21 +43,49 @@ button:hover {
     background: #334155;
 }
 
-.item {
-    padding: 10px;
-    border-bottom: 1px solid #1e293b;
-    cursor: pointer;
+/* GRID */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 15px;
 }
 
-.item:hover {
+/* CARDS */
+.card {
+    background: #0f172a;
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+    text-align: center;
+}
+
+.card:hover {
     background: #1e293b;
+}
+
+.icon {
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+/* PLAYER */
+.player-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #020617;
+    border-top: 1px solid #1e293b;
+    padding: 10px;
 }
 
 audio {
     width: 100%;
-    margin-top: 10px;
 }
 </style>
+
 </head>
 
 <body>
@@ -65,16 +97,20 @@ audio {
     <button onclick="goHome()">🏠 Inicio</button>
 </div>
 
-<div id="explorer">Cargando...</div>
+<div id="path" style="padding:10px; color:#94a3b8;"></div>
 
-<audio id="player" controls controlsList="nodownload"></audio>
+<div id="explorer" class="grid">Cargando...</div>
+
+<div class="player-bar">
+    <audio id="player" controls controlsList="nodownload"></audio>
+</div>
 
 <script>
 
 let ROOT = null;
 let historyStack = [];
 
-// 🔥 PASO 1: detectar ruta REAL automáticamente
+// 🔥 detectar carpeta base
 async function detectRoot() {
 
     const res = await fetch("/list?path=/");
@@ -108,6 +144,9 @@ async function loadFolder(path, addToHistory = true) {
         historyStack.push(path);
     }
 
+    document.getElementById("path").innerText =
+        decodeURIComponent(path);
+
     const res = await fetch("/list?path=" + encodeURIComponent(path));
     const text = await res.text();
 
@@ -132,9 +171,17 @@ async function loadFolder(path, addToHistory = true) {
         if (name.startsWith(".")) continue;
 
         if (href.endsWith("/")) {
-            html += `<div class="item" onclick="loadFolder('${href}')">📁 ${name}</div>`;
+            html += `
+            <div class="card" onclick="loadFolder('${href}')">
+                <div class="icon">📁</div>
+                <div>${name}</div>
+            </div>`;
         } else {
-            html += `<div class="item" onclick="playFile('${href}')">🎵 ${name}</div>`;
+            html += `
+            <div class="card" onclick="playFile('${href}')">
+                <div class="icon">🎵</div>
+                <div>${name}</div>
+            </div>`;
         }
     }
 
@@ -163,7 +210,7 @@ function goHome() {
     if (ROOT) loadFolder(ROOT);
 }
 
-// iniciar sistema
+// iniciar
 detectRoot();
 
 </script>
