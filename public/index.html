@@ -71,11 +71,8 @@ audio {
 
 <script>
 
-// 🔥 PON AQUÍ TU RUTA REAL (AJÚSTALA)
+// 🔥 RUTA CORRECTA (YA CONFIRMADA)
 const ROOT = "/Remix%20Pro%20DJ/";
-// EJEMPLOS SI NO FUNCIONA:
-// const ROOT = "/files/Remix Pro DJ/";
-// const ROOT = "/dav/Remix Pro DJ/";
 
 let historyStack = [];
 
@@ -98,11 +95,15 @@ async function loadFolder(path = ROOT, addToHistory = true) {
     for (let i = 0; i < items.length; i++) {
 
         const href = items[i].getElementsByTagName("d:href")[0].textContent;
-        const cleanHref = decodeURIComponent(href);
+
+        // ⚠️ IMPORTANTE: NO decodificar aquí
+        const cleanHref = href;
 
         if (cleanHref === path || cleanHref === path + "/") continue;
 
-        const name = cleanHref.split("/").filter(Boolean).pop();
+        const name = decodeURIComponent(
+            cleanHref.split("/").filter(Boolean).pop()
+        );
 
         if (!name) continue;
         if (name.startsWith(".")) continue;
@@ -138,7 +139,7 @@ function goHome() {
     loadFolder(ROOT);
 }
 
-// iniciar directo
+// iniciar
 loadFolder(ROOT);
 
 </script>
