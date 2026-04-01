@@ -14,74 +14,84 @@ body {
     margin: 0;
 }
 
+/* HEADER */
 header {
-    padding: 12px;
+    padding: 15px;
     text-align: center;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: bold;
     border-bottom: 1px solid #1e293b;
 }
 
+/* NAV */
 .nav {
     padding: 10px;
+    border-bottom: 1px solid #1e293b;
 }
 
 button {
-    padding: 10px;
+    padding: 8px 12px;
+    margin-right: 5px;
     background: #1e293b;
     color: white;
     border: none;
-    border-radius: 6px;
+    cursor: pointer;
+    border-radius: 5px;
 }
 
-/* ruta */
-#path {
-    padding: 8px;
-    font-size: 12px;
-    color: #94a3b8;
-    overflow-x: auto;
-    white-space: nowrap;
+button:hover {
+    background: #334155;
 }
 
-/* grid */
+/* GRID */
 .grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    padding: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 15px;
 }
 
-/* cards */
+/* CARDS */
 .card {
     background: #0f172a;
     padding: 15px;
     border-radius: 10px;
+    cursor: pointer;
     text-align: center;
 }
 
-.icon {
-    font-size: 40px;
+.card:hover {
+    background: #1e293b;
 }
 
-/* player */
+.icon {
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+/* PLAYER */
 .player-bar {
     position: fixed;
     bottom: 0;
-    width: 100%;
+    left: 0;
+    right: 0;
     background: #020617;
-    padding: 8px;
+    border-top: 1px solid #1e293b;
+    padding: 10px;
 }
 
 audio, video {
     width: 100%;
 }
 
+/* evitar que se tape contenido */
 body::after {
     content: "";
     display: block;
     height: 100px;
 }
 </style>
+
 </head>
 
 <body>
@@ -89,39 +99,70 @@ body::after {
 <header>🎧 Remix Pro DJ DEMO</header>
 
 <div class="nav">
-    <button onclick="goBack()">⬅</button>
-    <button onclick="goHome()">🏠</button>
+    <button onclick="goBack()">⬅ Regresar</button>
+    <button onclick="goHome()">🏠 Inicio</button>
 </div>
 
-<div id="path"></div>
+<div id="path" style="padding:10px; color:#94a3b8;"></div>
 
 <div id="explorer" class="grid">Cargando...</div>
 
 <div class="player-bar">
 
-<audio id="audioPlayer" controls controlsList="nodownload"></audio>
+    <!-- AUDIO -->
+    <audio id="audioPlayer" controls controlsList="nodownload"></audio>
 
-<video id="videoPlayer"
-controls
-controlsList="nodownload nofullscreen"
-playsinline webkit-playsinline
-style="display:none;">
-</video>
+    <!-- VIDEO -->
+    <video id="videoPlayer"
+        controls
+        controlsList="nodownload nofullscreen"
+        playsinline webkit-playsinline
+        style="display:none; max-height:250px; background:black;">
+    </video>
 
 </div>
 
 <script>
 
-const ROOT = "/"; // 🔥 YA NO BUSCAMOS NADA
-
+let ROOT = null;
 let historyStack = [];
 
-// 📁 cargar
+// detectar carpeta base (tu versión original)
+async function detectRoot() {
+
+    const res = await fetch("/list?path=/");
+    const text = await res.text();
+
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, "text/xml");
+
+    const items = xml.getElementsByTagName("d:response");
+
+    for (let i = 0; i < items.length; i++) {
+
+        const href = items[i].getElementsByTagName("d:href")[0].textContent;
+        const decoded = decodeURIComponent(href).toLowerCase();
+
+        if (decoded.includes("remix pro dj")) {
+            ROOT = href;
+            loadFolder(ROOT);
+            return;
+        }
+    }
+
+    document.getElementById("explorer").innerHTML =
+        "❌ No se encontró la carpeta Remix Pro DJ";
+}
+
+// cargar carpeta (SIN CAMBIOS)
 async function loadFolder(path, addToHistory = true) {
 
-    if (addToHistory) historyStack.push(path);
+    if (addToHistory) {
+        historyStack.push(path);
+    }
 
-    document.getElementById("path").innerText = decodeURIComponent(path);
+    document.getElementById("path").innerText =
+        decodeURIComponent(path);
 
     const res = await fetch("/list?path=" + encodeURIComponent(path));
     const text = await res.text();
@@ -140,20 +181,18 @@ async function loadFolder(path, addToHistory = true) {
         if (href === path) continue;
 
         const decoded = decodeURIComponent(href);
-        const name = decoded.split("/").filter(Boolean).pop();
+        const parts = decoded.split("/").filter(Boolean);
+        const name = parts[parts.length - 1];
 
         if (!name || name.startsWith(".")) continue;
 
         if (href.endsWith("/")) {
-
             html += `
             <div class="card" onclick="loadFolder('${href}')">
                 <div class="icon">📁</div>
                 <div>${name}</div>
             </div>`;
-
         } else {
-
             html += `
             <div class="card" onclick="playFile('${href}')">
                 <div class="icon">🎵</div>
@@ -166,7 +205,7 @@ async function loadFolder(path, addToHistory = true) {
         html || "⚠️ Carpeta vacía";
 }
 
-// ▶ reproducir
+// 🔥 REPRODUCCIÓN MEJORADA
 function playFile(url) {
 
     const fullUrl = "/stream?url=https://webdav.opendrive.com" + encodeURIComponent(url);
@@ -186,21 +225,24 @@ function playFile(url) {
 
         video.src = fullUrl;
         video.style.display = "block";
+        video.load();
         video.play();
 
     } else if (lower.endsWith(".mp3")) {
 
         audio.src = fullUrl;
         audio.style.display = "block";
+        audio.load();
         audio.play();
 
     } else if (lower.endsWith(".flac")) {
 
-        alert("⚠️ FLAC no compatible en navegador.");
+        alert("⚠️ FLAC no compatible en navegador (iPhone).");
+
     }
 }
 
-// navegación
+// navegación (igual)
 function goBack() {
     if (historyStack.length > 1) {
         historyStack.pop();
@@ -211,11 +253,11 @@ function goBack() {
 
 function goHome() {
     historyStack = [];
-    loadFolder(ROOT);
+    if (ROOT) loadFolder(ROOT);
 }
 
 // iniciar
-loadFolder(ROOT);
+detectRoot();
 
 </script>
 
