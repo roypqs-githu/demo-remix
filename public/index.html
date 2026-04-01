@@ -34,7 +34,6 @@ button {
     border-radius: 6px;
 }
 
-/* RUTA */
 #path {
     padding: 8px;
     font-size: 12px;
@@ -43,7 +42,6 @@ button {
     white-space: nowrap;
 }
 
-/* GRID */
 .grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -62,7 +60,6 @@ button {
     font-size: 40px;
 }
 
-/* PLAYER */
 .player-bar {
     position: fixed;
     bottom: 0;
@@ -75,7 +72,6 @@ audio, video {
     width: 100%;
 }
 
-/* espacio para no tapar */
 body::after {
     content: "";
     display: block;
@@ -112,17 +108,16 @@ style="display:none;">
 
 <script>
 
-// 🔥 RUTA FIJA (ESTABLE)
-const ROOT = "/Remix Pro DJ/";
+// 🔥 RUTA CORRECTA WEBdav
+const ROOT = "/Remix%20Pro%20DJ/";
 
 let historyStack = [];
 
-// 📁 cargar carpeta
 async function loadFolder(path, addToHistory = true) {
 
     if (addToHistory) historyStack.push(path);
 
-    document.getElementById("path").innerText = path;
+    document.getElementById("path").innerText = decodeURIComponent(path);
 
     const res = await fetch("/list?path=" + encodeURIComponent(path));
     const text = await res.text();
@@ -138,12 +133,16 @@ async function loadFolder(path, addToHistory = true) {
 
         const href = items[i].getElementsByTagName("d:href")[0].textContent;
 
+        // 🔥 ignorar root exacto
         if (href === path) continue;
 
         const decoded = decodeURIComponent(href);
         const name = decoded.split("/").filter(Boolean).pop();
 
         if (!name || name.startsWith(".")) continue;
+
+        // 🔥 asegurar que esté dentro de Remix Pro DJ
+        if (!href.includes("Remix%20Pro%20DJ")) continue;
 
         if (href.endsWith("/")) {
 
@@ -197,12 +196,12 @@ function playFile(url) {
 
     } else if (lower.endsWith(".flac")) {
 
-        alert("⚠️ FLAC no compatible en navegador. Usa MP3.");
+        alert("⚠️ FLAC no compatible en navegador.");
 
     }
 }
 
-// 🔙 regresar
+// navegación
 function goBack() {
     if (historyStack.length > 1) {
         historyStack.pop();
@@ -211,7 +210,6 @@ function goBack() {
     }
 }
 
-// 🏠 inicio
 function goHome() {
     historyStack = [];
     loadFolder(ROOT);
