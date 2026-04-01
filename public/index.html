@@ -2,6 +2,8 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Remix Pro DJ DEMO</title>
 
 <style>
@@ -14,63 +16,85 @@ body {
 
 /* HEADER */
 header {
-    padding: 15px;
+    padding: 12px;
     text-align: center;
-    font-size: 22px;
+    font-size: 18px;
     font-weight: bold;
-    background: #020617;
     border-bottom: 1px solid #1e293b;
 }
 
 /* NAV */
 .nav {
     padding: 10px;
-    background: #020617;
-    border-bottom: 1px solid #1e293b;
 }
 
 button {
-    padding: 8px 12px;
+    padding: 10px 14px;
     margin-right: 5px;
     background: #1e293b;
     color: white;
     border: none;
-    cursor: pointer;
-    border-radius: 5px;
+    border-radius: 6px;
+    font-size: 14px;
 }
 
-button:hover {
-    background: #334155;
+/* RUTA */
+#path {
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #94a3b8;
+    overflow-x: auto;
+    white-space: nowrap;
 }
 
-/* GRID */
+/* GRID RESPONSIVE 🔥 */
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-    padding: 15px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 10px;
+}
+
+/* TABLET */
+@media (min-width: 600px) {
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* PC */
+@media (min-width: 900px) {
+    .grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
 }
 
 /* CARDS */
 .card {
     background: #0f172a;
-    padding: 15px;
+    padding: 15px 10px;
     border-radius: 10px;
-    cursor: pointer;
-    transition: 0.2s;
     text-align: center;
+    cursor: pointer;
 }
 
 .card:hover {
     background: #1e293b;
 }
 
+/* ICONOS MÁS GRANDES 🔥 */
 .icon {
-    font-size: 30px;
+    font-size: 40px;
     margin-bottom: 10px;
 }
 
-/* PLAYER */
+/* TEXTO */
+.card div:last-child {
+    font-size: 13px;
+    word-break: break-word;
+}
+
+/* PLAYER FIJO CORRECTO 🔥 */
 .player-bar {
     position: fixed;
     bottom: 0;
@@ -78,11 +102,19 @@ button:hover {
     right: 0;
     background: #020617;
     border-top: 1px solid #1e293b;
-    padding: 10px;
+    padding: 8px;
 }
 
+/* AUDIO */
 audio {
     width: 100%;
+}
+
+/* 🔥 ESPACIO PARA QUE NO SE TAPE */
+body::after {
+    content: "";
+    display: block;
+    height: 80px;
 }
 </style>
 
@@ -93,11 +125,11 @@ audio {
 <header>🎧 Remix Pro DJ DEMO</header>
 
 <div class="nav">
-    <button onclick="goBack()">⬅ Regresar</button>
-    <button onclick="goHome()">🏠 Inicio</button>
+    <button onclick="goBack()">⬅</button>
+    <button onclick="goHome()">🏠</button>
 </div>
 
-<div id="path" style="padding:10px; color:#94a3b8;"></div>
+<div id="path"></div>
 
 <div id="explorer" class="grid">Cargando...</div>
 
@@ -110,7 +142,7 @@ audio {
 let ROOT = null;
 let historyStack = [];
 
-// 🔥 detectar carpeta base
+// detectar root
 async function detectRoot() {
 
     const res = await fetch("/list?path=/");
@@ -132,17 +164,12 @@ async function detectRoot() {
             return;
         }
     }
-
-    document.getElementById("explorer").innerHTML =
-        "❌ No se encontró la carpeta Remix Pro DJ";
 }
 
-// 📁 cargar carpeta
+// cargar carpeta
 async function loadFolder(path, addToHistory = true) {
 
-    if (addToHistory) {
-        historyStack.push(path);
-    }
+    if (addToHistory) historyStack.push(path);
 
     document.getElementById("path").innerText =
         decodeURIComponent(path);
@@ -167,8 +194,7 @@ async function loadFolder(path, addToHistory = true) {
         const parts = decoded.split("/").filter(Boolean);
         const name = parts[parts.length - 1];
 
-        if (!name) continue;
-        if (name.startsWith(".")) continue;
+        if (!name || name.startsWith(".")) continue;
 
         if (href.endsWith("/")) {
             html += `
@@ -186,16 +212,16 @@ async function loadFolder(path, addToHistory = true) {
     }
 
     document.getElementById("explorer").innerHTML =
-        html || "⚠️ Carpeta vacía";
+        html || "Carpeta vacía";
 }
 
-// ▶ reproducir
+// reproducir
 function playFile(url) {
     document.getElementById("player").src =
         "/stream?url=https://webdav.opendrive.com" + encodeURIComponent(url);
 }
 
-// 🔙 regresar
+// regresar
 function goBack() {
     if (historyStack.length > 1) {
         historyStack.pop();
@@ -204,7 +230,7 @@ function goBack() {
     }
 }
 
-// 🏠 inicio
+// inicio
 function goHome() {
     historyStack = [];
     if (ROOT) loadFolder(ROOT);
