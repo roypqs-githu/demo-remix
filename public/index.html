@@ -38,7 +38,7 @@ button {
     font-size: 14px;
 }
 
-/* RUTA */
+/* PATH */
 #path {
     padding: 8px 12px;
     font-size: 12px;
@@ -47,7 +47,7 @@ button {
     white-space: nowrap;
 }
 
-/* GRID RESPONSIVE 🔥 */
+/* GRID */
 .grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -55,21 +55,19 @@ button {
     padding: 10px;
 }
 
-/* TABLET */
 @media (min-width: 600px) {
     .grid {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
-/* PC */
 @media (min-width: 900px) {
     .grid {
         grid-template-columns: repeat(5, 1fr);
     }
 }
 
-/* CARDS */
+/* CARD */
 .card {
     background: #0f172a;
     padding: 15px 10px;
@@ -82,19 +80,17 @@ button {
     background: #1e293b;
 }
 
-/* ICONOS MÁS GRANDES 🔥 */
 .icon {
     font-size: 40px;
     margin-bottom: 10px;
 }
 
-/* TEXTO */
 .card div:last-child {
     font-size: 13px;
     word-break: break-word;
 }
 
-/* PLAYER FIJO CORRECTO 🔥 */
+/* PLAYER */
 .player-bar {
     position: fixed;
     bottom: 0;
@@ -110,11 +106,18 @@ audio {
     width: 100%;
 }
 
-/* 🔥 ESPACIO PARA QUE NO SE TAPE */
+/* VIDEO */
+video {
+    width: 100%;
+    max-height: 250px;
+    background: black;
+}
+
+/* espacio para player */
 body::after {
     content: "";
     display: block;
-    height: 80px;
+    height: 90px;
 }
 </style>
 
@@ -133,8 +136,13 @@ body::after {
 
 <div id="explorer" class="grid">Cargando...</div>
 
+<!-- PLAYER 🔥 -->
 <div class="player-bar">
-    <audio id="player" controls controlsList="nodownload"></audio>
+
+    <audio id="audioPlayer" controls controlsList="nodownload" style="display:none;"></audio>
+
+    <video id="videoPlayer" controls playsinline webkit-playsinline style="display:none;"></video>
+
 </div>
 
 <script>
@@ -142,7 +150,7 @@ body::after {
 let ROOT = null;
 let historyStack = [];
 
-// detectar root
+// detectar carpeta base
 async function detectRoot() {
 
     const res = await fetch("/list?path=/");
@@ -215,10 +223,35 @@ async function loadFolder(path, addToHistory = true) {
         html || "Carpeta vacía";
 }
 
-// reproducir
+// 🔥 REPRODUCCIÓN INTELIGENTE
 function playFile(url) {
-    document.getElementById("player").src =
-        "/stream?url=https://webdav.opendrive.com" + encodeURIComponent(url);
+
+    const fullUrl = "/stream?url=https://webdav.opendrive.com" + encodeURIComponent(url);
+
+    const audio = document.getElementById("audioPlayer");
+    const video = document.getElementById("videoPlayer");
+
+    audio.pause();
+    video.pause();
+
+    audio.style.display = "none";
+    video.style.display = "none";
+
+    const lower = url.toLowerCase();
+
+    if (
+        lower.endsWith(".mp4") ||
+        lower.endsWith(".mkv") ||
+        lower.endsWith(".webm")
+    ) {
+        video.src = fullUrl;
+        video.style.display = "block";
+        video.play();
+    } else {
+        audio.src = fullUrl;
+        audio.style.display = "block";
+        audio.play();
+    }
 }
 
 // regresar
