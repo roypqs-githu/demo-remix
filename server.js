@@ -4,16 +4,18 @@ const path = require("path");
 
 const app = express();
 
+// 🔐 TUS DATOS
 const USER = "TU_USUARIO";
 const PASS = "TU_PASSWORD";
 
+// SERVIR WEB
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// 📁 LISTAR
+// 📁 LISTAR ARCHIVOS
 app.get("/list", (req, res) => {
 
     const folder = decodeURIComponent(req.query.path || "/");
@@ -22,7 +24,11 @@ app.get("/list", (req, res) => {
         method: "PROPFIND",
         url: "https://webdav.opendrive.com" + folder,
         headers: { Depth: 1 },
-        auth: { user: USER, pass: PASS, sendImmediately: true }
+        auth: {
+            user: USER,
+            pass: PASS,
+            sendImmediately: true
+        }
     }, (err, response, body) => {
 
         if (err) return res.send("ERROR");
@@ -31,21 +37,24 @@ app.get("/list", (req, res) => {
     });
 });
 
-// 🎧 STREAM PRO 🔥
+// 🎧 STREAM PRO
 app.get("/stream", (req, res) => {
 
     const fileUrl = decodeURIComponent(req.query.url);
 
     request({
         url: fileUrl,
-        auth: { user: USER, pass: PASS, sendImmediately: true },
+        auth: {
+            user: USER,
+            pass: PASS,
+            sendImmediately: true
+        },
         headers: {
             "User-Agent": "Mozilla/5.0"
         }
     })
     .on("response", (response) => {
 
-        // 🔥 headers correctos para streaming
         res.setHeader("Content-Type", response.headers["content-type"] || "application/octet-stream");
         res.setHeader("Accept-Ranges", "bytes");
         res.setHeader("Cache-Control", "no-cache");
