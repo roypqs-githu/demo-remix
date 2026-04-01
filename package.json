@@ -1,7 +1,6 @@
 {
   "name": "remix-pro-dj-demo",
   "version": "1.0.0",
-  "description": "Demo streaming Remix Pro DJ",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
