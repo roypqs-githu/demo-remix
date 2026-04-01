@@ -78,6 +78,7 @@ body::after {
     height: 100px;
 }
 </style>
+
 </head>
 
 <body>
@@ -108,11 +109,38 @@ style="display:none;">
 
 <script>
 
-// 🔥 RUTA CORRECTA WEBdav
-const ROOT = "/Remix%20Pro%20DJ/";
-
+let ROOT = null;
 let historyStack = [];
 
+// 🔥 DETECTAR RUTA REAL (SIN SUPOSICIONES)
+async function detectRoot() {
+
+    const res = await fetch("/list?path=/");
+    const text = await res.text();
+
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, "text/xml");
+
+    const items = xml.getElementsByTagName("d:response");
+
+    for (let i = 0; i < items.length; i++) {
+
+        const href = items[i].getElementsByTagName("d:href")[0].textContent;
+        const decoded = decodeURIComponent(href).toLowerCase();
+
+        if (decoded.includes("remix pro dj")) {
+
+            ROOT = href; // 🔥 usamos EXACTO lo que devuelve
+            loadFolder(ROOT);
+            return;
+        }
+    }
+
+    document.getElementById("explorer").innerHTML =
+        "❌ No se encontró la carpeta Remix Pro DJ";
+}
+
+// 📁 CARGAR
 async function loadFolder(path, addToHistory = true) {
 
     if (addToHistory) historyStack.push(path);
@@ -133,16 +161,12 @@ async function loadFolder(path, addToHistory = true) {
 
         const href = items[i].getElementsByTagName("d:href")[0].textContent;
 
-        // 🔥 ignorar root exacto
         if (href === path) continue;
 
         const decoded = decodeURIComponent(href);
         const name = decoded.split("/").filter(Boolean).pop();
 
         if (!name || name.startsWith(".")) continue;
-
-        // 🔥 asegurar que esté dentro de Remix Pro DJ
-        if (!href.includes("Remix%20Pro%20DJ")) continue;
 
         if (href.endsWith("/")) {
 
@@ -166,7 +190,7 @@ async function loadFolder(path, addToHistory = true) {
         html || "⚠️ Carpeta vacía";
 }
 
-// ▶ reproducir
+// ▶ REPRODUCIR
 function playFile(url) {
 
     const fullUrl = "/stream?url=https://webdav.opendrive.com" + encodeURIComponent(url);
@@ -212,11 +236,11 @@ function goBack() {
 
 function goHome() {
     historyStack = [];
-    loadFolder(ROOT);
+    if (ROOT) loadFolder(ROOT);
 }
 
 // iniciar
-loadFolder(ROOT);
+detectRoot();
 
 </script>
 
