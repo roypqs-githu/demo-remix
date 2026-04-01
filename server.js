@@ -5,8 +5,8 @@ const path = require("path");
 const app = express();
 
 // 🔐 TUS DATOS OPENDRIVE (OBLIGATORIO)
-const USER = "TU_USUARIO";
-const PASS = "TU_PASSWORD";
+const USER = "roy.pqs@icloud.com";
+const PASS = "Sonido2k24";
 
 // Servir frontend
 app.use(express.static(path.join(__dirname, "public")));
