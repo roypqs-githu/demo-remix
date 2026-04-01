@@ -71,62 +71,75 @@ audio {
 
 <script>
 
-// 🔥 RUTA REAL (SIN %20)
-const ROOT = "/Remix Pro DJ/";
-
+let ROOT = null;
 let historyStack = [];
 
-async function loadFolder(path = ROOT, addToHistory = true) {
+// 🔥 PASO 1: detectar ruta REAL automáticamente
+async function detectRoot() {
+
+    const res = await fetch("/list?path=/");
+    const text = await res.text();
+
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, "text/xml");
+
+    const items = xml.getElementsByTagName("d:response");
+
+    for (let i = 0; i < items.length; i++) {
+
+        const href = items[i].getElementsByTagName("d:href")[0].textContent;
+        const decoded = decodeURIComponent(href).toLowerCase();
+
+        if (decoded.includes("remix pro dj")) {
+            ROOT = href;
+            loadFolder(ROOT);
+            return;
+        }
+    }
+
+    document.getElementById("explorer").innerHTML =
+        "❌ No se encontró la carpeta Remix Pro DJ";
+}
+
+// 📁 cargar carpeta
+async function loadFolder(path, addToHistory = true) {
 
     if (addToHistory) {
         historyStack.push(path);
     }
 
-    try {
+    const res = await fetch("/list?path=" + encodeURIComponent(path));
+    const text = await res.text();
 
-        // 🔥 aquí sí se codifica
-        const res = await fetch("/list?path=" + encodeURIComponent(path));
-        const text = await res.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, "text/xml");
 
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(text, "text/xml");
+    const items = xml.getElementsByTagName("d:response");
 
-        const items = xml.getElementsByTagName("d:response");
+    let html = "";
 
-        let html = "";
+    for (let i = 0; i < items.length; i++) {
 
-        for (let i = 0; i < items.length; i++) {
+        const href = items[i].getElementsByTagName("d:href")[0].textContent;
 
-            const href = items[i].getElementsByTagName("d:href")[0].textContent;
+        if (href === path) continue;
 
-            const decoded = decodeURIComponent(href);
+        const decoded = decodeURIComponent(href);
+        const parts = decoded.split("/").filter(Boolean);
+        const name = parts[parts.length - 1];
 
-            // ❌ ignorar root
-            if (decoded === path || decoded === path + "/") continue;
+        if (!name) continue;
+        if (name.startsWith(".")) continue;
 
-            const parts = decoded.split("/").filter(Boolean);
-            const name = parts[parts.length - 1];
-
-            if (!name) continue;
-            if (name.startsWith(".")) continue;
-
-            // 🔥 SOLO lo que esté dentro de Remix Pro DJ
-            if (!decoded.includes("Remix Pro DJ")) continue;
-
-            if (decoded.endsWith("/")) {
-                html += `<div class="item" onclick="loadFolder('${decoded}')">📁 ${name}</div>`;
-            } else {
-                html += `<div class="item" onclick="playFile('${decoded}')">🎵 ${name}</div>`;
-            }
+        if (href.endsWith("/")) {
+            html += `<div class="item" onclick="loadFolder('${href}')">📁 ${name}</div>`;
+        } else {
+            html += `<div class="item" onclick="playFile('${href}')">🎵 ${name}</div>`;
         }
-
-        document.getElementById("explorer").innerHTML =
-            html || "⚠️ Carpeta vacía o ruta incorrecta";
-
-    } catch (e) {
-        document.getElementById("explorer").innerHTML =
-            "❌ Error cargando carpeta";
     }
+
+    document.getElementById("explorer").innerHTML =
+        html || "⚠️ Carpeta vacía";
 }
 
 // ▶ reproducir
@@ -147,11 +160,11 @@ function goBack() {
 // 🏠 inicio
 function goHome() {
     historyStack = [];
-    loadFolder(ROOT);
+    if (ROOT) loadFolder(ROOT);
 }
 
-// iniciar
-loadFolder(ROOT);
+// iniciar sistema
+detectRoot();
 
 </script>
 
