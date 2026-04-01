@@ -1,77 +1,254 @@
-const express = require("express");
-const request = require("request");
-const path = require("path");
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-const app = express();
+<title>Remix Pro DJ DEMO</title>
 
-// 🔐 TUS DATOS
-const USER = "roy.pqs@icloud.com";
-const PASS = "Sonido2k24";
+<style>
+body {
+    background: #020617;
+    color: white;
+    font-family: Arial;
+    margin: 0;
+}
 
-// frontend
-app.use(express.static(path.join(__dirname, "public")));
+header {
+    padding: 15px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    border-bottom: 1px solid #1e293b;
+}
 
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+.nav {
+    padding: 10px;
+    border-bottom: 1px solid #1e293b;
+}
 
-// 📁 LISTAR
-app.get("/list", (req, res) => {
+button {
+    padding: 8px 12px;
+    margin-right: 5px;
+    background: #1e293b;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
 
-    const folder = decodeURIComponent(req.query.path || "/");
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    padding: 12px;
+}
 
-    request({
-        method: "PROPFIND",
-        url: "https://webdav.opendrive.com" + folder,
-        headers: { Depth: 1 },
-        auth: { user: USER, pass: PASS, sendImmediately: true }
-    }, (err, response, body) => {
+.card {
+    background: #0f172a;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 14px;
+}
 
-        if (err) return res.send("ERROR LIST");
+.icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
 
-        res.send(body);
-    });
-});
+/* PLAYER */
+.player-bar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #020617;
+    border-top: 1px solid #1e293b;
+    padding: 8px;
+}
 
-// 🎬🎵 STREAM REAL (COMPATIBLE iPhone / Android)
-app.get("/stream", (req, res) => {
+audio, video {
+    width: 100%;
+}
 
-    const fileUrl = decodeURIComponent(req.query.url);
-    const range = req.headers.range;
+body::after {
+    content: "";
+    display: block;
+    height: 120px;
+}
 
-    const headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "*/*",
-        "Connection": "keep-alive"
-    };
+/* 📱 MOBILE */
+@media (max-width: 600px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
 
-    if (range) {
-        headers["Range"] = range;
+</head>
+
+<body>
+
+<header>🎧 Remix Pro DJ DEMO</header>
+
+<div class="nav">
+    <button onclick="goBack()">⬅ Regresar</button>
+    <button onclick="goHome()">🏠 Inicio</button>
+</div>
+
+<div id="path" style="padding:10px; color:#94a3b8;"></div>
+
+<div id="explorer" class="grid">Cargando...</div>
+
+<div class="player-bar">
+
+<audio id="audioPlayer" controls controlsList="nodownload"></audio>
+
+<video id="videoPlayer"
+controls
+playsinline
+webkit-playsinline
+muted
+preload="metadata"
+style="display:none; max-height:250px; background:black;">
+</video>
+
+</div>
+
+<script>
+
+let ROOT = null;
+let historyStack = [];
+
+async function detectRoot() {
+
+    const res = await fetch("/list?path=/");
+    const text = await res.text();
+
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, "text/xml");
+
+    const items = xml.getElementsByTagName("d:response");
+
+    for (let i = 0; i < items.length; i++) {
+
+        const href = items[i].getElementsByTagName("d:href")[0].textContent;
+        const decoded = decodeURIComponent(href).toLowerCase();
+
+        if (decoded.includes("remix pro dj")) {
+            ROOT = href;
+            loadFolder(ROOT);
+            return;
+        }
     }
 
-    request({
-        url: fileUrl,
-        auth: {
-            user: USER,
-            pass: PASS,
-            sendImmediately: true
-        },
-        headers: headers
-    })
-    .on("response", (response) => {
+    document.getElementById("explorer").innerHTML =
+        "❌ No se encontró la carpeta Remix Pro DJ";
+}
 
-        res.writeHead(response.statusCode, {
-            "Content-Type": response.headers["content-type"] || "application/octet-stream",
-            "Accept-Ranges": "bytes",
-            "Content-Length": response.headers["content-length"],
-            "Content-Range": response.headers["content-range"],
-            "Cache-Control": "no-store"
+async function loadFolder(path, addToHistory = true) {
+
+    if (addToHistory) historyStack.push(path);
+
+    document.getElementById("path").innerText = decodeURIComponent(path);
+
+    const res = await fetch("/list?path=" + encodeURIComponent(path));
+    const text = await res.text();
+
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, "text/xml");
+
+    const items = xml.getElementsByTagName("d:response");
+
+    let html = "";
+
+    for (let i = 0; i < items.length; i++) {
+
+        const href = items[i].getElementsByTagName("d:href")[0].textContent;
+
+        if (href === path) continue;
+
+        const decoded = decodeURIComponent(href);
+        const parts = decoded.split("/").filter(Boolean);
+        const name = parts[parts.length - 1];
+
+        if (!name || name.startsWith(".")) continue;
+
+        if (href.endsWith("/")) {
+            html += `
+            <div class="card" onclick="loadFolder('${href}')">
+                <div class="icon">📁</div>
+                <div>${name}</div>
+            </div>`;
+        } else {
+            html += `
+            <div class="card" onclick="playFile('${href}')">
+                <div class="icon">🎵</div>
+                <div>${name}</div>
+            </div>`;
+        }
+    }
+
+    document.getElementById("explorer").innerHTML =
+        html || "⚠️ Carpeta vacía";
+}
+
+// 🎬🎵 FIX TOTAL
+function playFile(url) {
+
+    const fullUrl = "/stream?url=https://webdav.opendrive.com" + encodeURIComponent(url);
+
+    const audio = document.getElementById("audioPlayer");
+    const video = document.getElementById("videoPlayer");
+
+    audio.pause();
+    video.pause();
+
+    audio.style.display = "none";
+    video.style.display = "none";
+
+    const lower = url.toLowerCase();
+
+    if (lower.endsWith(".mp4")) {
+
+        video.src = fullUrl;
+        video.style.display = "block";
+
+        video.load();
+
+        video.play().catch(() => {
+            alert("Toca el video para reproducir");
         });
 
-    })
-    .pipe(res);
-});
+    } else if (lower.endsWith(".mp3")) {
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log("Servidor listo 🔥");
-});
+        audio.src = fullUrl;
+        audio.style.display = "block";
+
+        audio.load();
+        audio.play();
+
+    } else if (lower.endsWith(".flac")) {
+
+        alert("⚠️ FLAC no compatible en iPhone");
+    }
+}
+
+function goBack() {
+    if (historyStack.length > 1) {
+        historyStack.pop();
+        const prev = historyStack.pop();
+        loadFolder(prev);
+    }
+}
+
+function goHome() {
+    historyStack = [];
+    if (ROOT) loadFolder(ROOT);
+}
+
+detectRoot();
+
+</script>
+
+</body>
+</html>
