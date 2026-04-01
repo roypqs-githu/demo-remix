@@ -112,10 +112,10 @@ style="display:none;">
 let ROOT = null;
 let historyStack = [];
 
-// 🔥 DETECTAR RUTA REAL (SIN SUPOSICIONES)
-async function detectRoot() {
+// 🔥 BUSCAR EN TODAS LAS RUTAS
+async function findFolder(path = "/") {
 
-    const res = await fetch("/list?path=/");
+    const res = await fetch("/list?path=" + encodeURIComponent(path));
     const text = await res.text();
 
     const parser = new DOMParser();
@@ -128,16 +128,30 @@ async function detectRoot() {
         const href = items[i].getElementsByTagName("d:href")[0].textContent;
         const decoded = decodeURIComponent(href).toLowerCase();
 
+        // 🎯 ENCONTRAR CARPETA
         if (decoded.includes("remix pro dj")) {
-
-            ROOT = href; // 🔥 usamos EXACTO lo que devuelve
+            ROOT = href;
             loadFolder(ROOT);
-            return;
+            return true;
         }
     }
 
-    document.getElementById("explorer").innerHTML =
-        "❌ No se encontró la carpeta Remix Pro DJ";
+    return false;
+}
+
+// 🔥 INTENTAR EN VARIAS RUTAS POSIBLES
+async function detectRoot() {
+
+    let found = await findFolder("/");
+
+    if (!found) found = await findFolder("/dav/");
+    if (!found) found = await findFolder("/public.php/webdav/");
+    if (!found) found = await findFolder("/files/");
+
+    if (!found) {
+        document.getElementById("explorer").innerHTML =
+            "❌ No se encontró la carpeta Remix Pro DJ";
+    }
 }
 
 // 📁 CARGAR
@@ -221,7 +235,6 @@ function playFile(url) {
     } else if (lower.endsWith(".flac")) {
 
         alert("⚠️ FLAC no compatible en navegador.");
-
     }
 }
 
